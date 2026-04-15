@@ -2,15 +2,15 @@ import feedparser
 from google import genai
 import os
 
-# 1. Connexion
+# 1. Connexion avec votre clé API
 api_key = os.environ.get("GEMINI_API_KEY")
 if not api_key:
-    print("Erreur : Clé API manquante.")
+    print("Erreur : Clé API manquante dans les Secrets GitHub.")
     exit(1)
 
 client = genai.Client(api_key=api_key)
 
-# 2. Sources
+# 2. Collecte des news
 sources = [
     "https://tldr.tech/ai/rss",
     "https://www.therundown.ai/feed",
@@ -18,24 +18,21 @@ sources = [
 ]
 
 all_titles = ""
-print("Récupération des news...")
+print("Récupération des actualités...")
 for url in sources:
     try:
         feed = feedparser.parse(url)
-        for entry in feed.entries[:5]:
+        for entry in feed.entries[:4]:
             all_titles += f"- {entry.title}\n"
     except:
         continue
 
-if not all_titles:
-    all_titles = "Aucune news trouvée, fais un point général sur l'IA."
-
-# 3. Génération avec Gemini 2.0 Flash
+# 3. Appel au modèle spécifique Gemini 2.25 Flash
 try:
-    # On force le modèle 2.0 qui est souvent plus disponible sur les nouveaux projets
+    print("Génération du résumé avec Gemini 2.25 Flash...")
     response = client.models.generate_content(
-        model="gemini-2.0-flash", 
-        contents=f"Résume en français les news IA suivantes :\n{all_titles}"
+        model="gemini-2.25-flash", # Nom exact affiché dans votre console
+        contents=f"Tu es un expert en IA. Résume en français ces news de façon percutante :\n{all_titles}"
     )
     
     print("\n" + "="*40)
@@ -44,11 +41,11 @@ try:
     print(response.text)
     
 except Exception as e:
-    print(f"Échec avec Gemini 2.0 : {e}")
-    # Dernier recours : si 2.0 échoue, on tente le modèle "pro"
+    print(f"Erreur avec le modèle 2.25 : {e}")
+    # Si le nom exact échoue encore, on tente la version courte au cas où
     try:
-        response = client.models.generate_content(model="gemini-1.5-pro", contents=all_titles)
+        print("Nouvel essai avec le nom court...")
+        response = client.models.generate_content(model="gemini-2.25", contents=all_titles)
         print(response.text)
     except:
-        print("Tous les modèles ont échoué. Vérifiez votre accès sur Google AI Studio.")
         exit(1)
