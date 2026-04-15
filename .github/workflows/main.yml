@@ -1,21 +1,23 @@
 name: Rapport IA Matinal
 on:
   schedule:
-    - cron: '0 7 * * *' # Se lance tous les jours à 7h00 UTC (8h00 ou 9h00 en France)
-  workflow_dispatch: # Permet de le lancer à la main pour tester
+    - cron: '0 7 * * *' # Se lance tous les jours à 7h UTC (8h ou 9h en France)
+  workflow_dispatch: # Permet de lancer manuellement pour tester
 
 jobs:
   run_agent:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Setup Python
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - name: Configuration de Python
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
-      - name: Install dependencies
-        run: pip install feedparser google-generativeai
-      - name: Run Agent
+          python-version: '3.10'
+      - name: Installation des bibliothèques
+        run: |
+          pip install --upgrade pip
+          pip install feedparser google-generativeai
+      - name: Exécution de l'Agent
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: python agent_ia.py
