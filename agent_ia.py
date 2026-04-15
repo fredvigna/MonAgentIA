@@ -22,21 +22,36 @@ print("Récupération des news...")
 for url in sources:
     try:
         feed = feedparser.parse(url)
-        for entry in feed.entries[:4]:
+        for entry in feed.entries[:3]:
             all_titles += f"- {entry.title}\n"
     except:
         continue
 
-# 3. Détection automatique du modèle disponible
-print("Recherche du modèle disponible sur votre compte...")
+# 3. Détection automatique corrigée
+print("Recherche des modèles disponibles...")
+target_model = None
 try:
-    available_models = [m.name for m in client.models.list() if 'generateContent' in m.supported_methods]
-    # On cherche le modèle le plus récent qui contient "flash"
-    target_model = next((m for m in available_models if "flash" in m), available_models[0])
-    print(f"Modèle trouvé et utilisé : {target_model}")
+    # On liste les modèles et on affiche leurs noms pour débugger
+    for m in client.models.list():
+        # Dans la nouvelle lib, on vérifie les méthodes supportées comme ceci :
+        if 'generateContent' in m.supported_actions:
+            print(f"Modèle compatible trouvé : {m.name}")
+            # On cherche de préférence un modèle "flash"
+            if "flash" in m.name.lower():
+                target_model = m.name
+                break
+    
+    if not target_model:
+        # Si aucun flash n'est trouvé, on prend le tout premier disponible
+        models = list(client.models.list())
+        target_model = models[0].name
+        
 except Exception as e:
-    print(f"Impossible de lister les modèles : {e}")
-    target_model = "gemini-1.5-flash" # Repli par défaut
+    print(f"Erreur lors de la liste : {e}")
+    # Si tout échoue, on tente le nom technique complet
+    target_model = "models/gemini-1.5-flash"
+
+print(f"Tentative finale avec : {target_model}")
 
 # 4. Génération
 try:
@@ -46,10 +61,10 @@ try:
     )
     
     print("\n" + "="*40)
-    print("✨ VOTRE VEILLE IA DU JOUR ✨")
+    print("✨ VOTRE VEILLE IA DU MATIN ✨")
     print("="*40 + "\n")
     print(response.text)
     
 except Exception as e:
-    print(f"Échec final : {e}")
+    print(f"Échec critique : {e}")
     exit(1)
