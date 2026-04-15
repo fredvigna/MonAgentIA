@@ -1,6 +1,7 @@
 import feedparser
 from google import genai
 import os
+import time
 
 # 1. Connexion
 api_key = os.environ.get("GEMINI_API_KEY")
@@ -22,19 +23,16 @@ print("Récupération des news...")
 for url in sources:
     try:
         feed = feedparser.parse(url)
-        for entry in feed.entries[:5]:
+        for entry in feed.entries[:3]: # On réduit à 3 news pour économiser les jetons (tokens)
             all_titles += f"- {entry.title}\n"
     except:
         continue
 
-if not all_titles:
-    all_titles = "Aucune news trouvée, fais un point général sur l'IA."
-
-# 3. Génération avec Gemini 2.0 Flash
+# 3. Génération avec sécurité anti-quota
 try:
-    # On force le modèle 2.0 qui est souvent plus disponible sur les nouveaux projets
+    # On revient sur le 1.5-flash qui est plus souvent ouvert en gratuit que le 2.0
     response = client.models.generate_content(
-        model="gemini-2.0-flash", 
+        model="gemini-1.5-flash", 
         contents=f"Résume en français les news IA suivantes :\n{all_titles}"
     )
     
@@ -44,11 +42,6 @@ try:
     print(response.text)
     
 except Exception as e:
-    print(f"Échec avec Gemini 2.0 : {e}")
-    # Dernier recours : si 2.0 échoue, on tente le modèle "pro"
-    try:
-        response = client.models.generate_content(model="gemini-1.5-pro", contents=all_titles)
-        print(response.text)
-    except:
-        print("Tous les modèles ont échoué. Vérifiez votre accès sur Google AI Studio.")
-        exit(1)
+    print(f"Erreur rencontrée : {e}")
+    print("Astuce : Allez sur Google AI Studio, créez une NOUVELLE clé API dans un NOUVEAU projet.")
+    exit(1)
