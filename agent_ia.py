@@ -2,7 +2,7 @@ import feedparser
 from google import genai
 import os
 
-# 1. Connexion avec la nouvelle bibliothèque
+# 1. Connexion
 api_key = os.environ.get("GEMINI_API_KEY")
 if not api_key:
     print("Erreur : Clé API manquante.")
@@ -10,7 +10,7 @@ if not api_key:
 
 client = genai.Client(api_key=api_key)
 
-# 2. Vos sources
+# 2. Sources
 sources = [
     "https://tldr.tech/ai/rss",
     "https://www.therundown.ai/feed",
@@ -27,11 +27,14 @@ for url in sources:
     except:
         continue
 
-# 3. Génération avec le modèle universel
+if not all_titles:
+    all_titles = "Aucune news trouvée, fais un point général sur l'IA."
+
+# 3. Génération avec Gemini 2.0 Flash
 try:
-    # On utilise "gemini-1.5-flash" tout court, la nouvelle lib gère le reste
+    # On force le modèle 2.0 qui est souvent plus disponible sur les nouveaux projets
     response = client.models.generate_content(
-        model="gemini-1.5-flash",
+        model="gemini-2.0-flash", 
         contents=f"Résume en français les news IA suivantes :\n{all_titles}"
     )
     
@@ -41,5 +44,11 @@ try:
     print(response.text)
     
 except Exception as e:
-    print(f"Erreur avec la nouvelle API : {e}")
-    exit(1)
+    print(f"Échec avec Gemini 2.0 : {e}")
+    # Dernier recours : si 2.0 échoue, on tente le modèle "pro"
+    try:
+        response = client.models.generate_content(model="gemini-1.5-pro", contents=all_titles)
+        print(response.text)
+    except:
+        print("Tous les modèles ont échoué. Vérifiez votre accès sur Google AI Studio.")
+        exit(1)
