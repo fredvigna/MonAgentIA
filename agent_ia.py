@@ -14,7 +14,13 @@ client = genai.Client(api_key=api_key)
 sources = [
     "https://tldr.tech/ai/rss",
     "https://www.therundown.ai/feed",
-    "https://news.google.com/rss/search?q=artificial+intelligence+when:24h&hl=en-US&gl=US&ceid=US:en"
+    "https://news.google.com/rss/search?q=artificial+intelligence+when:24h&hl=en-US&gl=US&ceid=US:en",
+    "https://www.usine-digitale.fr/intelligence-artificielle/rss",
+    "https://www.lemonde.fr/pixels/rss_full.xml",
+    "https://www.journaldunet.com/rss/technologies/intelligence-artificielle/",
+    "https://www.technologyreview.com/topic/artificial-intelligence/feed/",
+    "https://rss.arxiv.org/rss/cs.AI",
+    "https://venturebeat.com/category/ai/feed/"
 ]
 
 all_titles = ""
