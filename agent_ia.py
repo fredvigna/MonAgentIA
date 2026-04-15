@@ -1,22 +1,16 @@
 import feedparser
-import google.generativeai as genai
+from google import genai
 import os
 
-# 1. Connexion
+# 1. Connexion avec la nouvelle bibliothèque
 api_key = os.environ.get("GEMINI_API_KEY")
 if not api_key:
     print("Erreur : Clé API manquante.")
     exit(1)
 
-genai.configure(api_key=api_key)
+client = genai.Client(api_key=api_key)
 
-# Test de plusieurs noms de modèles pour éviter la 404
-try:
-    model = genai.GenerativeModel('gemini-1.5-flash-latest')
-except:
-    model = genai.GenerativeModel('gemini-1.5-flash')
-
-# 2. Sources
+# 2. Vos sources
 sources = [
     "https://tldr.tech/ai/rss",
     "https://www.therundown.ai/feed",
@@ -24,6 +18,7 @@ sources = [
 ]
 
 all_titles = ""
+print("Récupération des news...")
 for url in sources:
     try:
         feed = feedparser.parse(url)
@@ -32,13 +27,19 @@ for url in sources:
     except:
         continue
 
-# 3. Prompt
-prompt = f"Résume en français les news IA suivantes de façon percutante :\n{all_titles}"
-
-# 4. Exécution
+# 3. Génération avec le modèle universel
 try:
-    response = model.generate_content(prompt)
+    # On utilise "gemini-1.5-flash" tout court, la nouvelle lib gère le reste
+    response = client.models.generate_content(
+        model="gemini-1.5-flash",
+        contents=f"Résume en français les news IA suivantes :\n{all_titles}"
+    )
+    
+    print("\n" + "="*40)
+    print("✨ VOTRE VEILLE IA DU JOUR ✨")
+    print("="*40 + "\n")
     print(response.text)
+    
 except Exception as e:
-    print(f"Nouvelle erreur rencontrée : {e}")
+    print(f"Erreur avec la nouvelle API : {e}")
     exit(1)
