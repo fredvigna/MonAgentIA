@@ -2,11 +2,16 @@ import feedparser
 import google.generativeai as genai
 import os
 
-# Configuration de l'IA avec votre clé cachée
-genai.configure(api_key=os.environ["GEMINI_API_KEY"])
+# 1. Connexion sécurisée à l'IA
+api_key = os.environ.get("GEMINI_API_KEY")
+if not api_key:
+    print("Erreur : La clé API GEMINI_API_KEY est manquante dans les Secrets GitHub.")
+    exit(1)
+
+genai.configure(api_key=api_key)
 model = genai.GenerativeModel('gemini-1.5-flash')
 
-# Vos 3 sources
+# 2. Vos sources de news (TLDR, The Rundown, Google News)
 sources = [
     "https://tldr.tech/ai/rss",
     "https://www.therundown.ai/feed",
@@ -15,20 +20,40 @@ sources = [
 
 all_titles = ""
 
-# On récupère les titres des news
+print("Récupération des actualités...")
 for url in sources:
     try:
         feed = feedparser.parse(url)
+        # On récupère les 5 titres les plus récents de chaque source
         for entry in feed.entries[:5]:
             all_titles += f"- {entry.title}\n"
-    except:
+    except Exception as e:
+        print(f"Erreur sur la source {url}: {e}")
         continue
 
-# Le message pour l'IA
-prompt = f"Tu es un expert en technologie. Voici les actualités IA du jour :\n{all_titles}\n\nFais-moi un résumé en français des 5 news les plus importantes sous forme de liste à puces. Sois bref et percutant."
+if not all_titles:
+    print("Aucune actualité trouvée. Vérifiez les flux RSS.")
+    exit(1)
 
-# Génération du résumé
-response = model.generate_content(prompt)
+# 3. Préparation du prompt pour l'IA
+prompt = f"""
+Tu es un expert en veille technologique spécialisé en Intelligence Artificielle. 
+Voici une liste de titres d'actualités récents en anglais :
+{all_titles}
 
-print("--- VEILLE IA DU JOUR ---")
-print(response.text)
+Mission : 
+1. Sélectionne les 5 news les plus importantes.
+2. Traduis et rédige un résumé court (2 phrases max par news) en français.
+3. Utilise un ton professionnel avec des emojis.
+"""
+
+# 4. Génération et affichage
+try:
+    response = model.generate_content(prompt)
+    print("\n" + "="*40)
+    print("✨ VOTRE VEILLE IA DU MATIN ✨")
+    print("="*40 + "\n")
+    print(response.text)
+except Exception as e:
+    print(f"Erreur lors de la génération par l'IA : {e}")
+    exit(1)
